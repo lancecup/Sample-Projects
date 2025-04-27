@@ -1,0 +1,413 @@
+\documentclass[12pt]{article}
+
+% Layout & fonts
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{setspace}
+
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Graphics & floats
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{rotating}
+\usepackage{float}
+\usepackage{caption}
+
+% Tables
+\usepackage{booktabs}
+
+% Section formatting
+\usepackage{titlesec}
+\titleformat{\section}
+  {\large\bfseries}
+  {\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalsize\bfseries}
+  {\thesubsection}{1em}{}
+
+% Hyperlinks & bibliography
+\usepackage{hyperref}
+\usepackage{natbib}
+
+\title{Multivariate Analysis of Spatial Inequality in the United Kingdom}
+\date{\today}
+
+\begin{document}
+\onehalfspacing
+
+\maketitle
+
+\section{Introduction}
+I have been interested in spatial economics, i.e.\ how economic agents interact with one another with respect to distance. Particularly, I find spatial inequality to be a pressing and persistent problem, where some regions prosper while others are left behind. One key driver of spatial inequality is real estate and housing affordability: some areas are simply more expensive, blocking opportunities for those who cannot afford to live there. To put this into perspective, Figure~\ref{fig:housingclimb} shows that in the United States the average home price has been steadily rising since the 1960s, making home ownership less attainable for the average person. This trend is prevalent globally, as housing prices grow much faster than incomes and rents \citep{Piketty2014}. Such regional disparities are even apparent in the wealthier parts of the world, making the United Kingdom a compelling case to examine spatial inequality more closely.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\linewidth]{Screenshot 2025-04-24 at 10.27.48 pm.png}
+  \caption{Rising Housing Prices in the US}
+  \caption*{\textit{Sources:} World Inequality Database and Federal Reserve Economic Data, Federal Reserve Bank of St. Louis.}
+  \label{fig:housingclimb}
+\end{figure}
+
+In this project, I examine how spatial inequality manifests across towns in the United Kingdom. Specifically, I address the following questions:
+\begin{enumerate}
+  \item What latent factors capture the structural variation in housing, economic, and demographic characteristics across UK towns (Factor Analysis)?
+  \item Can towns be grouped into distinct clusters based on their observed socioeconomic, housing, and demographic characteristics, and do these clusters reflect meaningful differences in wealth, affordability, and vulnerability (Hierarchical Clustering)?
+  \item Do differences in towns’ socioeconomic characteristics predict significant multivariate differences in housing outcomes, confirming that spatial inequality is meaningfully structured (Generalized Linear Model)?
+\end{enumerate}
+
+\section{Data Overview}
+To study spatial inequality in the UK, I employ the 2016 Housing and Commuting dataset compiled by \citet{Prothero2016} from the Office for National Statistics. This dataset draws on the 2011 Census, the 2015 Index of Multiple Deprivation (IMD), and Land Registry housing statistics back to 2004. It uses built-up areas rather than administrative boundaries, allowing for consistent comparisons across urban regions. Key indicators are sourced at the Lower Super Output Area (LSOA) level and then aggregated to the town level.
+
+However, the dataset has limitations:
+\begin{itemize}
+  \item It spans multiple time points (2011 Census vs.\ 2015 housing data), affecting temporal coherence.
+  \item Aggregating LSOA-level data to the town level may mask within-town variation, hiding pockets of deprivation or concentrated affluence.
+  \item The IMD is a composite measure with varying data quality across domains; as a relative ranking, it indicates position but not absolute deprivation.
+\end{itemize}
+
+The 10 key variables span housing, demographic, and vulnerability indicators:
+\begin{itemize}
+  \item Median house price in 2015 (\textit{all\_price\_2015})
+  \item Percentage change in house prices since 2004 (\textit{housepricechange})
+  \item Percentage homeowners (\textit{households\_owned})
+  \item Percentage private renters (\textit{households\_rent\_private})
+  \item Relative crime rank (\textit{crime\_rank})
+  \item Proportion with health vulnerabilities (\textit{prop\_health\_vuln})
+  \item Percentage without qualifications (\textit{noqual})
+  \item Proportion students 16–74 (\textit{student\_prop\_16\_74})
+  \item Net commuter flow (\textit{net\_commuting})
+  \item Proportion in manufacturing (\textit{prop\_manu})
+\end{itemize}
+
+Later, in the GLM analysis, I create three binary indicators:
+\textit{high\_growth}, \textit{high\_icd}, and \textit{high\_commuting}. Their summaries appear in Table~\ref{tab:merged_vars}, correlations in Figure~\ref{fig:corrmat}, and the chi-square quantile plot in Figure~\ref{fig:cqplot}. All variables are standardized prior to factor analysis and clustering to ensure comparability.
+
+
+% Summary Statistics & Continuous/Categorical
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lcrrrr}
+\hline
+\textbf{Variable} & \textbf{Type} & \textbf{Min} & \textbf{Median} & \textbf{Mean} & \textbf{Max} \\
+\hline
+\textit{all\_price\_2015} & Continuous & 78,000 & 145,000 & 170,363 & 390,000 \\
+\textit{housepricechange} & Continuous & -3.85 & 10.74 & 13.30 & 46.94 \\
+\textit{households\_owned} & Continuous & 33.55 & 60.71 & 60.30 & 81.01 \\
+\textit{households\_rent\_private} & Continuous & 9.93 & 17.69 & 17.74 & 32.45 \\
+\textit{crime\_rank}  & Categorical & 1 & 55 & 55 & 109 \\
+\textit{prop\_health\_vuln} & Continuous & 2.76 & 6.05 & 6.21 & 10.96 \\
+\textit{noqual} (in \% of town population) & Continuous & 12.18 & 23.92 & 24.13 & 37.94 \\
+\textit{student\_prop\_16\_74} & Continuous & 5.61 & 7.82 & 9.99 & 26.69 \\
+\textit{net\_commuting} & Continuous & -18,189 & 4,676 & 12,765 & 498,946 \\
+\textit{prop\_manu} & Continuous & 3.13 & 9.27 & 9.69 & 23.80 \\
+\textit{high\_growth} & Binary & 0 & 0 & 0.50 & 1 \\
+\textit{high\_icd} & Binary & 0 & 0 & 0.50 & 1 \\
+\textit{high\_commuting} & Binary & 0 & 0 & 0.50 & 1 \\
+\textit{region} & Categorical & & & & \\
+\hline
+\end{tabular}
+\caption{Type and summary statistics for variables used in the analysis}
+\label{tab:merged_vars}
+\end{table}
+
+% Correlation matrix
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{corrm.png}
+    \caption{Correlation Matrix of Key Variables with 95\% Confidence Intervals}
+    \label{fig:corrmat}
+\end{figure}
+
+% Chi-square quantile plot
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{cqplot.png}
+    \caption{Chi-Square Quantile Plot for 2015 UK Town Data}
+    \label{fig:cqplot}
+\end{figure}
+
+\section{Factor Analysis}
+% Evaluation of Correlations
+Going back to Figure~\ref{fig:corrmat}, the correlation matrix reveals several strong and interesting correlations among the variables. Most notably, median house price in 2015 is highly positively correlated with house price growth (\(r \approx 0.86\)), suggesting that wealthier towns have also experienced greater housing market acceleration, reinforcing patterns of spatial inequality. Additionally, house prices show strong negative correlations with indicators of socioeconomic vulnerability, including the proportion of residents with no qualifications (\(r \approx -0.84\)) and those with health vulnerabilities (\(r \approx -0.79\)). These patterns suggest that more affluent towns tend to have better-educated and healthier populations. The matrix also shows expected tenure dynamics: private renting and owner-occupation are negatively correlated (\(r \approx -0.51\)), and towns with larger student populations tend to have lower homeownership (\(r \approx -0.58\)). Meanwhile, the manufacturing employment share is positively associated with socioeconomic disadvantage, showing moderate-to-strong positive correlations with health vulnerability and lack of qualifications. Net commuting seems to show relatively weak correlations with other variables, suggesting that commuting patterns are more structurally independent. Overall, the observed correlations reinforce the existence of two broad dimensions: one capturing a wealth--vulnerability gradient, and another reflecting housing tenure and transience.
+
+% Intro in the factor analysis
+With these correlations in mind, factor analysis on the variables above should identify latent factors. But before proceeding, I should disclose that the Kaiser-Meyer-Olkin (KMO) measure for this data is 0.711, which implies that factor analysis is likely appropriate though not ideal with my data. I run principal components to find the number of latent factors and the scree plot in Figure~\ref{fig:scree} shows that the point of diminishing returns (or the elbow) happens at 3 principal components, so we pick the number above that elbow and are guided that there are likely 2 latent factors.
+
+% Scree plot 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{scree.png}
+    \caption{Scree Plot of Standardized 2015 UK Housing Data}
+    \label{fig:scree}
+\end{figure}
+
+% Orthogonal models 
+I compare three different orthogonal models (all with the varimax rotation) to see which best minimizes residual error. First, the examination of the residual correlation matrix indicated that a significant portion of off-diagonal residuals were small for most models, suggesting a reasonable fit of these factor models to the data. By comparing the root mean squared and the number of residual correlations greater than 0.05, each criterion suggests a different extraction method. The former is least with iterative PCA (0.05723) while the latter suggests to use maximum likelihood estimation (36\%). So I discuss both of these methods. Table~\ref{tab:factor_loadings} shows their factor loadings which are visualized in loading plots in Figure~\ref{fig:lps}. Both of these extraction methods seem to find two distinct factors based on their factor loadings. The first factor highlights the socioeconomic gradient since it's characterized by strong positive loadings on variables such as \textit{all\_price\_2015}, \textit{housepricechange}, and \textit{crime\_rank}, and strong negative loadings on indicators of marginalization including \textit{noqual}, \textit{prop\_health\_vuln}, and \textit{prop\_manu}. This factor delineates affluent towns from more disadvantaged areas as the former faces high housing costs, low deprivation, and more service-based economies whereas the latter has lower human capital, poorer health outcomes (on average), and a greater reliance on manufacturing industries (which are traditionally less profitable than services) \citep{Yang2020}. The second factor reflects the transiency of housing with its high positive loadings on \textit{student\_prop\_16\_74} and \textit{households\_rent\_private}, and a strong negative loading on \textit{households\_owned}. This pattern likely captures towns with more transient or rental-heavy populations, such as college towns or urban centers with high concentrations of students and young professionals, as opposed to more stable, owner-occupied communities.
+
+% Factor Loadings
+\begin{table}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Variable} & \textbf{PA1 (Iterative PCA)} & \textbf{PA2 (Iterative PCA)} & \textbf{Factor 1 (MLE)} & \textbf{Factor 2 (MLE)} \\
+\midrule
+\textit{all\_price\_2015}       & 0.97  & 0.03   & 0.93 & 0.16 \\
+\textit{housepricechange}       & 0.78  & 0.04   & 0.79 & 0.18 \\
+\textit{households\_owned}      & 0.16  & -0.82  & 0.28 & -0.82 \\
+\textit{households\_rent\_private} & 0.24 & 0.70   & 0.15 & 0.71 \\
+\textit{crime\_rank}            & 0.19  & -0.05  & 0.20 &       \\
+\textit{prop\_health\_vuln}     & -0.86 & 0.16   & -0.89 &       \\
+\textit{noqual}                 & -0.92 & -0.08  & -0.90 & -0.17 \\
+\textit{student\_prop\_16\_74}  & 0.22  & 0.73   & 0.14 & 0.75 \\
+\textit{net\_commuting}         & 0.15  & 0.36   & 0.12 & 0.40 \\
+\textit{prop\_manu}             & -0.62 & -0.36  & -0.59 & -0.44 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Comparison of factor loadings from Iterative PCA and Maximum Likelihood Estimation (MLE)}
+\label{tab:factor_loadings}
+\end{table}
+
+% Loading plots
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{lp.png}
+        \caption{Loading Plot for MLE}
+        \label{fig:lp1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{lp2.png}
+        \caption{Loading Plot for Iterative PCA}
+        \label{fig:lp2}
+    \end{subfigure}
+    \caption{Two Loading Plots}
+    \label{fig:lps}
+\end{figure}
+
+So these two factors imply that towns are distinguished by how affluent its residents are and for how long they tend to stick around. The dichotomy from the first factor captures the long-term consequences of economic restructuring and deindustrialization as areas transition into strong knowledge-based economies / financial hubs that diverge from post-industrial areas that face persistent deprivation and health challenges. Meanwhile, the second dimension of transiency arises from differences in towns' urban functions and demographic dynamics. University towns and large cities tend to have more transient, rental-heavy populations linked to education and early-career migration, whereas mid-sized commuter towns and more residential areas exhibit greater housing stability through higher rates of homeownership.
+
+\section{Hierarchical Clustering}
+% Intro Hierarchical Clustering
+To explore the grouping of towns in a robust manner, I apply hierarchical clustering under four distance-agglomeration combinations to prevent yielding findings that were spurious or a result of the choice of distance/agglomeration method. Regarding distance measures, I use Euclidean distance since most of my variables are continuous and that it gives equal attention/weight to every standardized variable. Then I compare it with maximum distance that highlights the greatest distance between towns and magnifies sharp socioeconomic differences. Meanwhile for agglomeration methods, complete linkage's resilience against outliers and the fact that it gets the maximum distance between clusters which allows outliers to be singled out which is to be expected among towns with some super star cities (I expect London to stand out). Contrastingly, Ward's method fuses clusters by minimizing the total within-cluster variance, and thus results in compact and similar groupings which are ideal for the profile of towns I want to identify. Based on diagnostic criteria (root-mean-square standard deviation, R-squared, semi-partial R-squared, and cluster distance plots which is consistent for most clusters), the analysis suggests a six-cluster solution, I present the dendrograms for these four different clusterings in Figure~\ref{fig:clusters}.
+
+\begin{sidewaysfigure}
+  \centering
+  \resizebox{\textwidth}{!}{%
+    \begin{tabular}{cc}
+      \includegraphics{ec.png} & \includegraphics{ew.png}\\[-1ex] 
+      \includegraphics{mc.png} & \includegraphics{mw.png}\\[-1ex]
+    \end{tabular}%
+  }
+  \caption{Dendrograms under Different Specifications}
+  \label{fig:clusters}
+\end{sidewaysfigure}
+
+Across all four dendrograms, the same broad pattern emerges. First, London consistently severs from the rest of the tree, standing alone as an outlier—its exceptional house-price level, rapid appreciation, heavy in-commuting, and distinctive rental market sharply distinguish it from every other town. Beneath this top-level split, five robust clusters appear across all specifications: 
+
+\begin{enumerate}
+    \item A high-affluence university cluster (Cambridge, Oxford, Bath, Brighton \& Hove, Guildford, and under Ward’s rule, St Albans), combining very high prices and price growth with large student shares, extensive private renting, and minimal manufacturing employment.  
+    \item A prosperous commuter-belt group (e.g., Reading, Woking, Bracknell, Crawley, Basingstoke), characterized by elevated but not extreme house prices, high owner-occupation, and strong net in-commuting.  
+    \item Major regional service hubs (Manchester, Birmingham, Liverpool, Leeds, Newcastle, Sheffield, and Bristol) forming a cluster with mid-range house prices, sizable student populations, and mixed deprivation indicators.  
+    \item A post-industrial branch (Blackpool, Burnley, Stoke-on-Trent, Grimsby, Sunderland, and similar towns) combining low house prices and weak price growth with high health vulnerability, low qualifications, and a heavy reliance on manufacturing. 
+    \item A mid-tier stable group (e.g., Ipswich, Colchester, Swindon), generally lying close to the sample median across most indicators.
+\end{enumerate}
+
+To better visualize these groupings, I project the maximum-distance complete-linkage clustering into principal component space (Figure~\ref{fig:pcspace}) and discriminant analysis space (Figure~\ref{fig:daspace}). The consistency of the same five substantive clusters—elite knowledge centers, commuter belts, regional service hubs, post-industrial towns, and average mid-sized settlements—across all distance–linkage pairings suggests that this typology reflects genuine structural differences rather than artifacts of a particular clustering method.
+
+\begin{figure}[htbp]
+    \centering
+    %--- first panel --------------------------------------------------------
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{pcsp.png}
+        \caption{Principal-component space\label{fig:pcspace}}
+    \end{subfigure}
+    %--- second panel -------------------------------------------------------
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{dasp.png}
+        \caption{Discriminant-analysis space\label{fig:daspace}}
+    \end{subfigure}
+    %-----------------------------------------------------------------------
+    \caption{Six–Cluster Solution in 2D Projections}
+    \label{fig:cluster_spaces}
+\end{figure}
+
+
+
+\section{Multivariate Generalized Linear Models}
+
+% For MANOVA/Multivariate GLM, tests of significance at multivariate and univariate level, evaluation of residuals (chi-square quantile plot), discussion of coefficients, perhaps multivariate contrasts, maybe MRPP.
+I use a multivariate GLM to investigate whether socioeconomic conditions (commuting patterns, health vulnerability, manufacturing employment, and geographic region) predicts significant multivariate differences across towns' median house prices and rates of home ownership which serve as the analysis' response variables. I include categorical predictors to model spatial variation (\textit{region}), commuting patterns (\textit{high\_commute}), and the interaction between income deprivation and price growth (\textit{high\_icd × high\_growth}). On top of that, I incorporate covariates that capture broader demographic characteristics (\textit{prop\_health\_vuln}, \textit{noqual}, and \textit{prop\_manu}). In doing so, this approach would allow for a more comprehensive understanding of how structural and spatial socioeconomic factors jointly shape housing outcomes, highlighting the complexity of inequalities across different local contexts. 
+
+Before proceeding, I first examine if there is evidence to suspect an interaction between high income deprivation and price growth on the response variables. I check for this interaction since I believe that unaffordability of housing could possibly be both a demand and supply side issue where people are receiving lower incomes while houses are also growing at a faster rate. The interaction plots in Figures~\ref{fig:int1} and ~\ref{fig:int2} show that they seem to intersect which strongly suggests some interaction between these variables, justifying my approach to include their interaction in the model. 
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{int1.png}
+        \caption{Median House Price}
+        \label{fig:int1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{int2.png}
+        \caption{Proportion of Homeowners}
+        \label{fig:int2}
+    \end{subfigure}
+    \caption{Interaction Plots on Median House Price and Homeownership}
+    \label{fig:interaction_plots}
+\end{figure}
+
+Table~\ref{tab:manova_summary} summarizes the multivariate significance tests based on Pillai's trace, Wilks Lambda, Hotelling-Lawley Trace, and Roy's Largest Root. The multivariate GLM results show that commuting patterns, regional location, health vulnerability, and proportion of no qualification residents are significant multivariate predictors of housing outcomes. The proportion of manufacturing is significant only at the 10\% significance level but is worth pointing out nonetheless. Meanwhile, deprivation alone (\textit{high\_imd}), house price growth (\textit{high\_growth}), and their interaction (\textit{high\_icd:high\_growth}) are not significant predictors in the multivariate model. 
+
+\begin{table}[htbp]
+\centering
+\caption{Type III Multivariate GLM Results}
+\label{tab:manova_summary}
+\begin{tabular}{lcc}
+\hline
+\textbf{Predictor} & \textbf{Approx. F} & \textbf{p-value} \\
+\hline
+high\_imd & 0.106 & 0.8993 \\
+high\_growth & 1.360 & 0.2617 \\
+high\_commuting & 11.567 & \textless{}0.001*** \\
+region & 2.898 & \textless{}0.001*** \\
+prop\_health\_vuln & 6.821 & 0.0017** \\
+noqual & 11.740 & \textless{}0.001*** \\
+prop\_manu & 2.741 & 0.0698* \\
+high\_imd:high\_growth & 0.499 & 0.6089 \\
+\hline
+\end{tabular}
+\end{table}
+
+The multivariate regression coefficients for statistically significant predictors, presented in Table~\ref{tab:coeffs}, suggest that towns with higher commuting inflows tend to have lower median house prices and a homeownership rate approximately 6 percentage points lower than other towns. This pattern is intuitive: towns with high commuting flows often have more transient populations and a higher proportion of renters, while lower local demand can also contribute to suppressed house prices. Regional differences are also pronounced. The regional comparisons are noticeable where London stands out with average house prices approximately \pounds132,380 higher than those in the base region of Yorkshire and the Humber. In contrast, Wales has significantly cheaper homes, with prices \pounds32,557 lower than Yorkshire and an 8 percentage point higher homeownership rate compared to London, where homeownership is nearly 9 percentage points lower.
+
+Turning to demographic characteristics, towns with higher proportions of health-vulnerable populations tend to have lower house prices, with each unit increase associated with a reduction of approximately £1,000. This could reflect broader issues in these towns, such as poorer access to healthcare services or broader socioeconomic disadvantage, factors that may make them less attractive to potential homeowners. Similarly, towns with higher proportions of residents without qualifications see significantly lower median house prices (by about £7,100), which may signal a weaker local labor market, fewer productive firms, and less economic dynamism overall. Finally, a higher share of manufacturing employment is also associated with modest declines in house prices, while its relationship with homeownership appears mixed and relatively weak.
+
+To ensure the validity of the multivariate results, I first check whether the assumption of multivariate normal residuals is satisfied using a chi-square quantile plot. Figure~\ref{fig:cqplotresid} shows that the residuals are approximately multivariate normal, supporting the reliability of the findings. Additionally, I inspect the univariate Type III ANOVA results in Table~\ref{tab:anova_summary}. These results largely align with the multivariate conclusions: commuting patterns, regional location, and health vulnerability emerge as significant predictors, particularly for the proportion of homeowners. Educational attainment (no qualifications) is strongly associated with median house prices but not with homeownership rates. In contrast, deprivation, house price growth, and their interaction remain non-significant across both housing outcomes.
+
+\begin{table}[htbp]
+\centering
+\caption{Multivariate GLM Coefficients for Housing Outcomes}
+\label{tab:coeffs}
+\begin{tabular}{lcc}
+\hline
+\textbf{Predictor} & \textbf{all\_price\_2015 (Estimate)} & \textbf{households\_owned (Estimate)} \\
+\hline
+high\_commuting & -4,209.29 & -5.92 \\
+base region: Yorkshire & &\\
+and The Humber & & \\
+region1: East Midlands & -32,565.80 & 0.39 \\
+region2: East of England & 14,727.34 & -5.72 \\
+region3: London & 132,380.44 & -8.78 \\
+region4: North East & -20,534.30 & 2.75 \\
+region5: North West & -29,592.55 & 6.10 \\
+region6: South East & 5,021.10 & -4.30 \\
+region7: South West & -16,259.11 & -1.14 \\
+region8: Wales & -32,556.96 & 8.10 \\
+region9: West Midlands & -1,700.88 & 1.84 \\
+prop\_health\_vuln & -1,000.25 & -3.47 \\
+noqual & -7,100.13 & 0.29 \\
+prop\_manu & -1,712.56 & 0.45 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{cqpr.png}
+    \caption{Chi-Square Quantile Plot for Multivariate GLM Residuals}
+    \label{fig:cqplotresid}
+\end{figure}
+
+The multivariate GLM assesses the joint predictive power of the socioeconomic explanatory variables on both housing outcomes simultaneously. To further explore these effects individually, I turn to the univariate ANOVA results. Table~\ref{tab:anova_summary} presents these findings. For homeownership, the results show that commuting patterns, regional location, and health vulnerability remain significant predictors, consistent with the multivariate results. However, the proportion of residents without qualifications, which was significant in the multivariate model, appears to have no meaningful impact on homeownership rates, as indicated by its very large p-value. This suggests that while education levels matter for broader housing patterns, they do not seem to directly influence the decision or ability to own a home by itself. 
+
+In contrast, the determinants of median house prices differ. Here, region and the proportion of residents without qualifications emerge as the primary significant factors. Regional differences align with broader geographic disparities in the housing market, while lower educational attainment may reflect weaker local economies that struggle to sustain higher property values. Other variables such as commuting patterns and health vulnerability, though important for ownership, appear less critical in explaining variations in median house prices when considered independently.
+
+
+\begin{table}[htbp]
+\centering
+\caption{Follow-up Type III ANOVAs by Dependent Variable}
+\label{tab:anova_summary}
+\begin{tabular}{lcc|cc}
+\hline
+\textbf{Predictor} & \multicolumn{2}{c|}{\textit{all\_price\_2015}} & \multicolumn{2}{c}{\textit{households\_owned}} \\
+ & \textbf{F} & \textbf{p-value} & \textbf{F} & \textbf{p-value} \\
+\hline
+high\_imd & 0.05 & 0.8225 & 0.16 & 0.6902 \\
+high\_growth & 0.20 & 0.9931 & 0.97 & 0.3265 \\
+high\_commuting & 0.49 & 0.4837 & 23.04 & $<$0.001*** \\
+region & 37.45 & $<$0.001*** & 19.97 & $<$0.001*** \\
+prop\_health\_vuln & 0.05 & 0.8261 & 13.77 & 0.00035*** \\
+noqual & 22.64 & $<$0.001*** & 0.10 & 0.9996 \\
+prop\_manu & 2.05 & 0.1561 & 3.37 & 0.0697* \\
+high\_imd:high\_growth & 0.23 & 0.6358 & 0.76 & 0.3849 \\
+\hline
+\end{tabular}
+\end{table}
+
+However the regional disparities shown in the multivariate model is especially striking, so I use a multivariate contrast to compare London to the rest of the regions since it really stands out and see how everywhere else stands relative to it. A formal multivariate contrast (Table~\ref{tab:london_vs_other}) comparing London against all other towns reveals a highly significant difference in housing outcomes, based on Pillai’s trace ($F(2, 99) = 11.27$, $p < 0.001$). London exhibits markedly higher median house prices and lower homeownership rates compared to the rest of the United Kingdom, reinforcing its distinct role in shaping spatial inequality patterns.
+
+\begin{table}[htbp]
+\centering
+\caption{Multivariate Contrast: London vs Other Towns}
+\label{tab:london_vs_other}
+\begin{tabular}{lccc}
+\hline
+\textbf{Test Statistic} & \textbf{Value} & \textbf{Approx. F (2, 99)} & \textbf{p-value} \\
+\hline
+Pillai's Trace & 0.1855 & 11.27 & $<$0.001*** \\
+Wilks' Lambda & 0.8145 & 11.27 & $<$0.001*** \\
+Hotelling-Lawley Trace & 0.2277 & 11.27 & $<$0.001*** \\
+Roy's Largest Root & 0.2277 & 11.27 & $<$0.001*** \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+Taken together, the three strands of analysis paint a coherent picture of how and why spatial inequality persists across the United Kingdom.
+
+First, the factor analysis reduced the variation of ten place-based indicators into two clear, orthogonal dimensions/factors with the affluence-vulnerability gradient that captures the long-run legacy of economic restructuring. Prosperous towns combine high house prices, rapid capital gains, and well-educated, healthy populations while post-industrial areas show almost the opposite. The second factor which captures the transiency of housing situations distinguishes stable, homeowning communities from rental-heavy, student-oriented, or highly mobile labor markets. These latent factors hint at a map divided not just by wealth but the nature of people's day to day lives.
+
+Second, hierarchical clustering was used to group towns using the same variables and ended up with six distinct town profiles using different distance-agglomeration specifications:
+
+\begin{enumerate}
+    \item London (Unique enough to be its own category)
+    \item Elite university cities Knowledge industries and intense rental demand)
+    \item Affluent commuter belts (Great access to metropolitan jobs at the cost of housing stability)
+    \item Major regional service hubs (Large cities that balance growth with some pockets of deprivation)
+    \item Post-industrial towns (Low skills, poor health, and sluggish housing markets)
+    \item Mid-tier stable settlements (Variables hover around the national median)
+\end{enumerate}
+
+These distinct profiles somewhat confirm that spatial inequality is not random noise, but a patterned hierarchy reproduced across England and Wales.
+
+Finally, the multivariate GLM showed that these patterns matter for concrete housing outcomes. Commuting intensity, region, health vulnerability, and human capital jointly explain significant variation in both median home prices and ownership rates. However, the expected interaction between income deprivation and price growth since 2004 were insignificant alongside these other variables. After controlling for local demographics, London's house prices remain more that \pounds 130,000 more expensive (with lower ownership rates) than the national baseline (Yorkshire and the Humber). In sum, mobility and place intersect: towns that export workers, import students, or inherit poor health adn skills see this encoded directly in their housing markets.
+
+\paragraph{Implications}
+The results from this paper suggest that policies that do not take into consideration the socioeconomic fabric of the town will fail to meet its goals. Bridging the UK's regional disparities requires interventions that takes into consideration the profile of the town, their history and their potential. 
+\begin{itemize}
+    \item Post-industrial cities require investment in the human capital of residents for them to transition into more lucrative industries that may attract non-manufacturing firms and hopefully revitalize the area.
+    \item University cities and commuter belts need policies that increases the housing supply and tame the high-rent dynamics that disproportionately harm poorer households.
+    \item Regional hubs need policies that promote growth while protecting their comparatively affordable housing situation.
+    \item London needs metropolitan-scale solutions that recognize its national gravitational pull in terms of goods and people. 
+\end{itemize}
+
+\paragraph{Points for Further Analysis}
+Future studies can continue studying these spatial dynamics by improving the kind of data being analyzed. By updating the analysis using more recent data like the 2021 census and the 2024 land registry, one may capture the resilience/persistence of these town profiles amidst Brexit and COVID-19. Another point to consider is to go further down in granularity by using LSOA as the geographic unit to see whether average towns mask sharp neighborhood disparities (pockets of gentrification or deprivation). Also, it would be good to include variables that capture the local amenities and infrastructure of the towns that may contribute to one's mobility or productivity, providing greater depth to the affluence-vulnerability gradient. 
+
+\bibliographystyle{apalike}
+\bibliography{sources}
+\end{document}
+

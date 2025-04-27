@@ -1,0 +1,409 @@
+---
+title: "Multivariate Analysis of Spatial Inequality in England and Wales"
+author: "Lance Pangilinan"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+---
+
+# Introduction
+
+*(Narrative as per accompanying PDF report.)*
+
+# Data Overview
+
+## Setup (Working Directory, Libraries, etc.)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Working Directory
+
+```{r setwd}
+# Clear workspace and set working directory
+rm(list=ls())
+setwd("~/Downloads/Multivariate_Stats")
+```
+
+### Libraries
+
+```{r libraries}
+# Load required packages for analysis
+library(aplpack)    # Hierarchical clustering tools
+library(fpc)        # Cluster analysis functions
+library(cluster)    # Clustering algorithms
+library(ape)        # Dendrogram plotting
+library(amap)       # Distance metrics
+
+library(MASS)       # MANOVA and multivariate analysis
+library(biotools)   # Multivariate visualization
+
+library(psych)      # Factor analysis tools
+library(car)        # Companion to applied regression
+library(corrplot)   # Correlation plots
+library(EFAtools)   # Exploratory factor analysis
+
+library(heplots)    # HE plots for multivariate data
+```
+
+### Load and Prepare Data
+
+```{r data}
+# Read dataset and select relevant variables
+data <- read.csv("Housing_UK_2015.csv")
+variables <- c("town", "all_price_2015", "housepricechange", "households_owned", 
+               "households_rent_private", "crime_rank", "prop_health_vuln", 
+               "noqual", "student_prop_16_74", "net_commuting", "prop_manu")
+
+house <- data[, variables]
+rownames(house) <- house[, "town"]
+house <- house[,-1]
+
+# Standardize variables
+house2 <- scale(house)
+```
+
+# Descriptive Statistics
+
+```{r sumstat}
+# Summary statistics for each variable
+summary(house)
+```
+
+```{r cqplot}
+# Chi-square quantile plot for multivariate normality check
+cqplot(house, main = "Chi-Square Quantiles for 2016 UK City Housing Data")
+```
+
+# Factor Analysis
+
+```{r corrplot}
+# Display raw correlations and plot correlation matrix
+round(cor(house2),2)
+corrplot.mixed(cor(house2), lower.col = "black", upper = "ellipse", tl.col = "black", 
+               number.cex = .7, tl.pos = "lt", tl.cex = .7, 
+               p.mat = cor.mtest(house2, conf.level = .95)$p, sig.level = .05)
+```
+
+```{r kmo}
+# Check sampling adequacy for factor analysis
+KMO(as.matrix(house2))
+```
+
+```{r pca}
+# Perform Principal Component Analysis (PCA)
+comp1 <- prcomp(house2, scale. = TRUE)
+
+# Display PCA summary (variance explained and eigenvalues)
+summary.PCA.JDRS <- function(x){
+  sum_JDRS <- summary(x)$importance
+  sum_JDRS[1, ] <- sum_JDRS[1, ]^2
+  attr(sum_JDRS, "dimnames")[[1]][1] <- "Eigenvals (Variance)"
+  sum_JDRS
+}
+round(summary.PCA.JDRS(comp1), 2)
+
+# Display PCA loadings
+round(comp1$rotation, 2)
+
+# Scree plot of PCA
+screeplot(comp1, type = "lines", col = "red", lwd = 2, pch = 19, cex = 1.2, 
+          main = "Scree Plot of Standardized 2015 UK Housing Data")
+```
+
+*Elbow suggests retaining 2 principal components (latent factors).*
+
+## Maximum Likelihood Estimation (MLE)
+
+```{r mle}
+# Conduct factor analysis using maximum likelihood estimation
+factor <- factanal(house2, factors = 2, rotation = "varimax")
+factor
+```
+
+```{r comparison}
+# Assess fit: reproduced vs. observed correlation matrix
+repro2 <- factor$loadings %*% t(factor$loadings)
+resid2 <- cor(house2) - repro2
+round(resid2, 2)
+
+# Calculate Root Mean Square Residual (RMSR)
+len <- length(resid2[upper.tri(resid2)])
+(RMSR2 <- sqrt(sum(resid2[upper.tri(resid2)]^2)/len))
+
+# Proportion of residuals > 0.05
+paste0(round(sum(abs(resid2[upper.tri(resid2)]) > 0.05)/len*100), "%")
+```
+
+## Principal Axis Factoring (PAF)
+
+```{r PAF}
+# Conduct factor analysis using principal axis factoring
+factor2 <- fa(house2, nfactors = 2, rotate = "varimax", fm = "pa")
+factor2
+```
+
+```{r}
+# Assess fit for PAF
+repro2 <- factor2$loadings %*% t(factor2$loadings)
+resid2 <- cor(house2) - repro2
+round(resid2, 2)
+
+# Calculate RMSR
+len <- length(resid2[upper.tri(resid2)])
+(RMSR2 <- sqrt(sum(resid2[upper.tri(resid2)]^2)/len))
+paste0(round(sum(abs(resid2[upper.tri(resid2)]) > 0.05)/len*100), "%")
+```
+
+## Iterative PCA
+
+```{r}
+# Conduct iterative PCA with quartimax rotation
+factor3 <- fa(house2, nfactors = 2, rotate = "quartimax", SMC = FALSE, fm = "pa")
+factor3
+```
+
+```{r}
+# Assess fit for iterative PCA
+repro3 <- factor3$loadings %*% t(factor3$loadings)
+resid3 <- cor(house2) - repro3
+round(resid3, 2)
+
+# RMSR and proportion of residuals > 0.05
+len <- length(resid3[upper.tri(resid3)])
+RMSR3 <- sqrt(sum(resid3[upper.tri(resid3)]^2)/len)
+RMSR3
+paste0(round(sum(abs(resid3[upper.tri(resid3)]) > 0.05)/len*100), "%")
+```
+
+### Loading Plots
+
+```{r loading}
+# Visualize factor loadings (MLE)
+plot(factor$loadings, pch = 18, col = 'red')
+abline(h = 0)
+abline(v = 0)
+text(factor$loadings, labels = names(house), cex = 0.8)
+```
+
+```{r loading}
+# Visualize factor loadings (Iterative PCA)
+plot(factor3$loadings, pch = 18, col = 'red')
+abline(h = 0)
+abline(v = 0)
+text(factor3$loadings, labels = names(house), cex = 0.8)
+```
+
+# Hierarchical Clustering
+
+## Clustering 1 – Euclidean Distance & Complete Linkage
+
+```{r clustering1-complete, echo=TRUE, message=FALSE}
+# Compute Euclidean distance matrix
+dist_euc <- dist(house2, method = "euclidean")
+
+# Perform hierarchical clustering using complete linkage
+hc_complete <- hclust(dist_euc, method = "complete")
+
+# Plot dendrogram with 6 clusters highlighted
+plot(hc_complete,
+     labels = rownames(house2),
+     cex = 0.42,
+     xlab = "",
+     ylab = "Distance",
+     main = "Euclidean Distance + Complete Linkage")
+rect.hclust(hc_complete, k = 6)
+```
+
+```{r clustering1-evaluate, echo=TRUE}
+# Load evaluation function and evaluate clustering
+source("https://raw.githubusercontent.com/jreuning/sds363_code/refs/heads/main/HClusEval3.R.txt")
+hclus_eval(house2,
+           dist_m = 'euclidean',
+           clus_m = 'complete',
+           plot_op = TRUE,
+           print_num = 15)
+```
+
+```{r clustering1-boxes, echo=TRUE}
+# Re-plot dendrogram with cluster boundaries for reporting
+plot(hc_complete,
+     labels = rownames(house2),
+     cex = 0.42,
+     xlab = "",
+     ylab = "Distance",
+     main = "Clustering of Towns")
+rect.hclust(hc_complete, k = 6)
+```
+
+## Clustering 2 – Euclidean Distance & Ward’s Method
+
+```{r clustering2-ward, echo=TRUE, message=FALSE}
+# Compute Euclidean distance matrix
+dist_euc2 <- dist(house2, method = "euclidean")
+
+# Perform hierarchical clustering using Ward's method
+hc_ward <- hclust(dist_euc2, method = "ward.D")
+
+# Plot dendrogram with 6 clusters highlighted
+plot(hc_ward,
+     labels = rownames(house2),
+     cex = 0.42,
+     xlab = "",
+     ylab = "Distance",
+     main = "Euclidean Distance + Ward's Method")
+rect.hclust(hc_ward, k = 6)
+```
+
+```{r clustering2-evaluate, echo=TRUE}
+# Evaluate clustering: Euclidean + Average linkage (for comparison)
+source("https://raw.githubusercontent.com/jreuning/sds363_code/refs/heads/main/HClusEval3.R.txt")
+hclus_eval(house2,
+           dist_m = 'euclidean',
+           clus_m = 'average',
+           plot_op = TRUE,
+           print_num = 15)
+```
+
+## Clustering 3 – Maximum Distance & Complete Linkage
+
+```{r clustering3-complete, echo=TRUE}
+# Compute maximum (Chebyshev) distance matrix
+dist_max <- dist(house2, method = "maximum")
+
+# Perform hierarchical clustering using complete linkage
+hc_max_complete <- hclust(dist_max, method = "complete")
+
+# Plot dendrogram with 6 clusters highlighted
+plot(hc_max_complete,
+     labels = rownames(house2),
+     cex = 0.42,
+     xlab = "",
+     ylab = "Distance",
+     main = "Maximum Distance + Complete Linkage")
+rect.hclust(hc_max_complete, k = 6)
+```
+
+```{r clustering3-evaluate, echo=TRUE}
+# Evaluate clustering: Maximum distance + Complete linkage
+source("https://raw.githubusercontent.com/jreuning/sds363_code/refs/heads/main/HClusEval3.R.txt")
+hclus_eval(house2,
+           dist_m = 'maximum',
+           clus_m = 'complete',
+           plot_op = TRUE,
+           print_num = 15)
+```
+
+## Clustering 4 – Maximum Distance & Ward’s Method
+
+```{r clustering4-ward, echo=TRUE}
+# Compute maximum distance matrix
+dist_max2 <- dist(house2, method = "maximum")
+
+# Perform hierarchical clustering using Ward's method
+hc_max_ward <- hclust(dist_max2, method = "ward.D")
+
+# Plot dendrogram without evaluation for final grouping
+plot(hc_max_ward,
+     labels = rownames(house2),
+     cex = 0.42,
+     xlab = "",
+     ylab = "Distance",
+     main = "Maximum Distance + Ward's Method")
+
+# Assign cluster memberships to data frame (6 clusters)
+house$cluster <- cutree(hc_max_ward, k = 6)
+```
+
+
+## MANOVA and GLM
+
+```{r manova-setup, echo=TRUE}
+# Create binary indicators for deprivation, growth, and commuting
+house$imd_rank     <- data$imd_rank
+house$high_imd     <- ifelse(house$imd_rank <= median(house$imd_rank, na.rm = TRUE), 1, 0)
+house$high_growth  <- ifelse(house$housepricechange >= median(house$housepricechange, na.rm = TRUE), 1, 0)
+house$high_commuting <- ifelse(house$net_commuting >= median(house$net_commuting, na.rm = TRUE), 1, 0)
+
+# Map region factor levels to descriptive names
+house$region       <- factor(data$region[match(house$crime_rank, data$crime_rank)],
+                             labels = c("East Midlands", "East of England", "London", 
+                                        "North East", "North West", "South East", 
+                                        "South West", "Wales", "West Midlands", 
+                                        "Yorkshire and The Humber"))
+
+# Inspect data structure and summary statistics
+str(house)
+summary(house)
+```
+
+```{r interaction-plots, echo=TRUE, warning=FALSE}
+# Interaction plots for median house price and homeownership
+interaction.plot(house$high_growth,
+                 house$high_imd,
+                 house$all_price_2015,
+                 lwd = 3,
+                 trace.label = "High IMD",
+                 xlab = "High Growth",
+                 main = "Interaction: Median House Price")
+
+interaction.plot(house$high_growth,
+                 house$high_imd,
+                 house$households_owned,
+                 lwd = 3,
+                 trace.label = "High IMD",
+                 xlab = "High Growth",
+                 main = "Interaction: Home Ownership")
+```
+
+```{r glm-manova, echo=TRUE}
+# Set contrasts for MANOVA
+options(contrasts = c("contr.sum", "contr.poly"))
+
+# Fit multivariate linear model for price and ownership
+housemod <- lm(cbind(all_price_2015, households_owned) ~
+                 high_imd * high_growth +
+                 high_commuting +
+                 region +
+                 prop_health_vuln +
+                 noqual +
+                 prop_manu,
+               data = house)
+
+# Multivariate and univariate ANOVA (Type III sums of squares)
+summary(Anova(housemod, type = 3), univariate = TRUE)
+
+# Check residual multivariate normality
+cqplot(housemod$residuals,
+       label = "Residuals from GLM",
+       main  = "Chi-Square Quantile Plot for GLM Residuals")
+```
+
+```{r glm-coefficients, echo=TRUE}
+# Display coefficients for multivariate model
+coef(housemod)
+```
+
+```{r contrasts, echo=TRUE}
+# Reset to treatment contrasts for group comparison
+options(contrasts = c("contr.treatment", "contr.poly"))
+
+# Create London vs. Other grouping
+house$region_group <- ifelse(house$region == "London", "London", "Other")
+
+# Fit grouped model and test difference
+housemod_grouped <- lm(cbind(all_price_2015, households_owned) ~
+                         high_imd * high_growth +
+                         high_commuting +
+                         region_group +
+                         prop_health_vuln +
+                         noqual +
+                         prop_manu,
+                       data = house)
+
+# Multivariate contrast: London vs. Other
+linearHypothesis(housemod_grouped, "region_groupOther = 0")
