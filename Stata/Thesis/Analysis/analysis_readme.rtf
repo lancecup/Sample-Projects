@@ -1,0 +1,111 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2818
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+Importing Inequality: China Shock Analysis Pipeline\
+--------------------------------------------------\
+\
+This directory contains the full Stata-based pipeline\'97numbered 00 through 08\'97that\
+processes raw census and trade data into final, replicable 2SLS regression results for\
+the thesis \'93Importing Inequality? The China Shock and Wage Disparities in Mexico.\'94\
+\
+Each script is self-contained and outputs intermediate datasets under `../Datos`.\
+Together they cover: data ingestion, variable harmonization, trade shock construction,\
+and baseline estimation.\
+\
+================================================================================\
+Contents\
+--------------------------------------------------------------------------------\
+00_build_microdata.do           \'95 Merge five INEGI Census/intercensal files\
+01_recode_person_vars.do        \'95 Harmonize person-level categories (IPUMS style)\
+02_clean_income_dist.do         \'95 Trim income sample (age 15+, P1/P99)\
+03_make_residual_wages.do       \'95 Compute log wages, residualize, aggregate to LLM-year\
+04_clean_mexico_trade.do        \'95 Import & clean Mexico\'92s UN-Comtrade FOB data\
+05_build_mexico_ipw.do          \'95 Build ADH-style China-shock exposures for Mexico\
+06_clean_comparator_trade.do    \'95 Import & clean comparator countries\'92 trade data\
+07_build_comparator_ipw.do      \'95 Construct foreign-export instrument (comparators)\
+08_run_baseline_regs.do         \'95 Merge all covariates, run OLS & 2SLS regressions\
+\
+================================================================================\
+Requirements\
+--------------------------------------------------------------------------------\
+\'95 Stata 17 or later (64-bit recommended)\
+\'95 set maxvar 30000\
+\'95 UN-Comtrade raw CSVs downloaded to `raw/trade_mex`\
+\'95 INEGI raw person files (1990, 2000, 2010, 2015 intercensal, 2020) in `raw/census`\
+\
+================================================================================\
+Directory Layout\
+--------------------------------------------------------------------------------\
+project_root/\
+\uc0\u9474 \
+\uc0\u9500 \u9472  do/                       \u8592  this folder\
+\uc0\u9474    \u9500 \u9472  00_build_microdata.do\
+\uc0\u9474    \u9500 \u9472  \'85 \
+\uc0\u9474    \u9492 \u9472  08_run_baseline_regs.do\
+\uc0\u9474 \
+\uc0\u9500 \u9472  raw/\
+\uc0\u9474    \u9500 \u9472  census/               \u8592  original INEGI .txt or .dta files\
+\uc0\u9474    \u9500 \u9472  trade_mex/            \u8592  UN-Comtrade exports/imports for Mexico\
+\uc0\u9474    \u9492 \u9472  trade_comparators/    \u8592  UN-Comtrade for comparator countries\
+\uc0\u9474 \
+\uc0\u9492 \u9472  Datos/                    \u8592  created by scripts; holds all intermediate and final data\
+    \uc0\u9500 \u9472  Cleaned_Indiv/        \u8592  merged/harmonized person\u8208 level .dta files\
+    \uc0\u9500 \u9472  Trade/                \u8592  cleaned trade series\
+    \uc0\u9500 \u9472  Aggregates/           \u8592  LLM\u8208 year aggregates, residual wages, convergence metrics\
+    \uc0\u9492 \u9472  Logs/                 \u8592  optional .smcl logs per script\
+\
+================================================================================\
+Global Macros\
+--------------------------------------------------------------------------------\
+Each .do file expects these macros. Adjust as needed, ideally in a `profile.do`:\
+\
+    global raw              "../raw"\
+    global constructeddata  "../Datos"\
+\
+================================================================================\
+Execution\
+--------------------------------------------------------------------------------\
+From within the `do/` folder, run in order:\
+\
+    do 00_build_microdata.do\
+    do 01_recode_person_vars.do\
+    do 02_clean_income_dist.do\
+    do 03_make_residual_wages.do\
+    do 04_clean_mexico_trade.do\
+    do 05_build_mexico_ipw.do\
+    do 06_clean_comparator_trade.do\
+    do 07_build_comparator_ipw.do\
+    do 08_run_baseline_regs.do\
+\
+================================================================================\
+Output Summary\
+--------------------------------------------------------------------------------\
+\'95 Cleaned person data: `Datos/Cleaned_Indiv/merged_indiv.dta`\
+\'95 Income sample:       `Datos/Cleaned_Indiv/Ingresos_Pob15.dta`\
+\'95 Residual wages & convergence metrics:\
+                        `Datos/Aggregates/SalResMTL_*.dta`, `Convergencia_*.dta`\
+\'95 Mexico trade:        `Datos/Trade/mexico_matched.dta`\
+\'95 China-shock exposures:\
+                        `Datos/Cleaned_Indiv/adh_mexico_llm_*.dta`, `indep.dta`\
+\'95 Foreign-export IV:    `Datos/Trade/comparator_clean.dta`, `foreign_iv.dta`\
+\'95 Regression results:   `regression.dta`\
+\
+================================================================================\
+Troubleshooting\
+--------------------------------------------------------------------------------\
+\'95 \'93file not found\'94: verify `global raw` path and directory names.\
+\'95 Memory errors: ensure 64-bit Stata and `set maxvar 30000`.\
+\'95 Mismatch on merge: inspect merge keys (`llm`, `year`, `Ind3D`) for missing values.\
+\
+================================================================================\
+Contact\
+--------------------------------------------------------------------------------\
+Lance Cu Pangilinan\
+Yale University, Economics Department\
+lance.pangilinan@yale.edu\
+}
