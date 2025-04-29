@@ -1,9 +1,0 @@
-Flask
-pandas
-matplotlib
-seaborn
-statsmodels
-linearmodels
-pyarrow
-scipy
-numpy
