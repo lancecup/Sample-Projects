@@ -27,76 +27,15 @@ save combined_china_trade, replace               // Initialize combined dataset
 // Loop or repeat for each additional year/file
 // For each file: re-import, apply same filters, then append to combined_china_trade
 
-import delimited "C_A_724_201501_H4_O.txt", clear
+* 2) Italy (380)
+*  1990
+import delimited "C_A_380_199001_S3.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
-append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_724_200101_H3_O.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
-import delimited "C_A_702_201901_H5_O.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-save combined_china_trade, replace   // No append, new base file
-
-import delimited "C_A_702_201501_H4_O.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
-import delimited "C_A_702_201001_H3_O.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
-import delimited "C_A_702_200001_H1.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
-import delimited "C_A_702_199001_H0.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
-// --- Italy series ---
-import delimited "C_A_380_201901_H5_O.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
-import delimited "C_A_380_201501_H4_O.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
-import delimited "C_A_380_201001_H3_O.txt", clear
-keep if partnercode == 156 & flowcode == "M"
-drop if cmdcode == "TOTAL"
-drop if strlen(cmdcode) < 6
-append using combined_china_trade
-save combined_china_trade, replace
-
+*  2000
 import delimited "C_A_380_200001_H1_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
@@ -104,42 +43,77 @@ drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_380_199001_S3.txt", clear
+*  2010
+import delimited "C_A_380_201001_H3_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-// --- Ireland series ---
-import delimited "C_A_372_201901_H5_O.txt", clear
+*  2015
+import delimited "C_A_380_201501_H4_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_372_201501_H4_O.txt", clear
+*  2019
+import delimited "C_A_380_201901_H5_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_372_201001_H3_O.txt", clear
+
+* ————————————————————————————————
+* 3) Spain (724)
+*  1990
+import delimited "C_A_724_199001_H0.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_372_200001_H1_O.txt", clear
+*  2000
+import delimited "C_A_724_200001_H1_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
+*  2010
+import delimited "C_A_724_201001_H3_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2015
+import delimited "C_A_724_201501_H4_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2019
+import delimited "C_A_724_201901_H5_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+
+* ————————————————————————————————
+* 4) Ireland (372)
+*  1990
 import delimited "C_A_372_199001_S3.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
@@ -147,35 +121,85 @@ drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-// --- Canada series ---
-import delimited "C_A_124_201901_H5_O.txt", clear
+*  2000
+import delimited "C_A_372_200001_H1_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_124_201501_H4_O.txt", clear
+*  2010
+import delimited "C_A_372_201001_H3_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_124_201001_H3_O.txt", clear
+*  2015
+import delimited "C_A_372_201501_H4_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
-import delimited "C_A_124_200001_H1_O.txt", clear
+*  2019
+import delimited "C_A_372_201901_H5_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
 drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
+
+* ————————————————————————————————
+* 5) Singapore (702)
+*  1990
+import delimited "C_A_702_199001_H0.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2000
+import delimited "C_A_702_200001_H1.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2010
+import delimited "C_A_702_201001_H3_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2015
+import delimited "C_A_702_201501_H4_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2019
+import delimited "C_A_702_201901_H5_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+
+* ————————————————————————————————
+* 6) Canada (124)
+*  1990
 import delimited "C_A_124_199001_H0_O.txt", clear
 keep if partnercode == 156 & flowcode == "M"
 drop if cmdcode == "TOTAL"
@@ -183,6 +207,123 @@ drop if strlen(cmdcode) < 6
 append using combined_china_trade
 save combined_china_trade, replace
 
+*  2000
+import delimited "C_A_124_200001_H1_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2010
+import delimited "C_A_124_201001_H3_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2015
+import delimited "C_A_124_201501_H4_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2019
+import delimited "C_A_124_201901_H5_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+
+* ————————————————————————————————
+* 7) Country code 586
+*  1990
+import delimited "C_A_586_199001_S3_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2000
+import delimited "C_A_586_200001_S3.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2010
+import delimited "C_A_586_201001_H3.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2015
+import delimited "C_A_586_201501_H4.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2019
+import delimited "C_A_586_201901_H5_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+
+* ————————————————————————————————
+* 8) Country code 360
+*  1990
+import delimited "C_A_360_199001_H0.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2000
+import delimited "C_A_360_200001_H1.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2010
+import delimited "C_A_360_201001_H3.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2015
+import delimited "C_A_360_201501_H4.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
+
+*  2019
+import delimited "C_A_360_201901_H5_O.txt", clear
+keep if partnercode == 156 & flowcode == "M"
+drop if cmdcode == "TOTAL"
+drop if strlen(cmdcode) < 6
+append using combined_china_trade
+save combined_china_trade, replace
 
 //-------------------------------------------------------------------------
 * SECTION 2: Compute Average FOB Value Across Census Years
