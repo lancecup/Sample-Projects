@@ -1,4 +1,3 @@
-
 Importing Inequality: China Shock Analysis Pipeline
 --------------------------------------------------
 
@@ -17,11 +16,11 @@ Contents
 01_recode_person_vars.do        • Harmonize person-level categories (IPUMS style)
 02_clean_income_dist.do         • Trim income sample (age 15+, P1/P99)
 03_make_residual_wages.do       • Compute log wages, residualize, aggregate to LLM-year
-04_clean_mexico_trade.do        • Import & clean Mexico’s UN-Comtrade FOB data
-05_build_mexico_ipw.do          • Build ADH-style China-shock exposures for Mexico
-06_clean_comparator_trade.do    • Import & clean comparator countries’ trade data
-07_build_comparator_ipw.do      • Construct foreign-export instrument (comparators)
-08_run_baseline_regs.do         • Merge all covariates, run OLS & 2SLS regressions
+04_construct_mexico_imports.do  • Import & clean Mexico’s UN-Comtrade FOB data
+05_build_concurrent_exposure.do • Build ADH-style China-shock exposures for Mexico
+06_stack_multicountry_trade.do  • Import & clean comparator countries’ trade data
+07_build_lagged_exposure.do     • Construct foreign-export instrument (comparators)
+08_run_regressions.do           • Merge all covariates, run OLS & 2SLS regressions
 
 ================================================================================
 Requirements
@@ -39,7 +38,7 @@ project_root/
 ├─ do/                       ← this folder
 │   ├─ 00_build_microdata.do
 │   ├─ … 
-│   └─ 08_run_baseline_regs.do
+│   └─ 08_run_regressions.do
 │
 ├─ raw/
 │   ├─ census/               ← original INEGI .txt or .dta files
@@ -69,11 +68,11 @@ From within the `do/` folder, run in order:
     do 01_recode_person_vars.do
     do 02_clean_income_dist.do
     do 03_make_residual_wages.do
-    do 04_clean_mexico_trade.do
-    do 05_build_mexico_ipw.do
-    do 06_clean_comparator_trade.do
-    do 07_build_comparator_ipw.do
-    do 08_run_baseline_regs.do
+    do 04_construct_mexico_imports.do
+    do 05_build_concurrent_exposure.do
+    do 06_stack_multicountry_trade.do
+    do 07_build_lagged_exposure.do
+    do 08_run_regressions.do
 
 ================================================================================
 Output Summary
